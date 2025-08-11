@@ -1,0 +1,144 @@
+{
+  "name": "PDF to Markdown Converter",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "url": "http://localhost:8000/convert-pdf",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file",
+              "value": "={{ $json.file }}",
+              "parameterType": "formData"
+            }
+          ]
+        }
+      },
+      "id": "pdf-converter-api",
+      "name": "PDF Converter API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [240, 300],
+      "webhookId": ""
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "success-check",
+              "leftValue": "={{ $json.success }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "success-check",
+      "name": "Check Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Processa o markdown convertido\nconst markdown = $input.first().json.markdown;\nconst filename = $input.first().json.filename;\n\n// Aqui você pode adicionar lógica adicional\n// Por exemplo, salvar em arquivo, enviar para outro serviço, etc.\n\nreturn {\n  json: {\n    processed: true,\n    filename: filename,\n    markdown: markdown,\n    timestamp: new Date().toISOString(),\n    message: 'PDF processado com sucesso'\n  }\n};"
+      },
+      "id": "process-markdown",
+      "name": "Process Markdown",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Trata erro na conversão\nconst error = $input.first().json.detail || 'Erro desconhecido na conversão';\n\nreturn {\n  json: {\n    processed: false,\n    error: error,\n    timestamp: new Date().toISOString(),\n    message: 'Falha na conversão do PDF'\n  }\n};"
+      },
+      "id": "handle-error",
+      "name": "Handle Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Salva o markdown em arquivo (exemplo)\nconst markdown = $input.first().json.markdown;\nconst filename = $input.first().json.filename;\n\n// Remove extensão .pdf e adiciona .md\nconst mdFilename = filename.replace(/\\.pdf$/i, '.md');\n\n// Aqui você pode implementar a lógica de salvamento\n// Por exemplo, usando o nó 'Write Binary File' do n8n\n\nreturn {\n  json: {\n    saved: true,\n    originalFile: filename,\n    markdownFile: mdFilename,\n    content: markdown,\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "id": "save-markdown",
+      "name": "Save Markdown",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 200]
+    }
+  ],
+  "connections": {
+    "PDF Converter API": {
+      "main": [
+        [
+          {
+            "node": "Check Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Success": {
+      "main": [
+        [
+          {
+            "node": "Process Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Handle Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Markdown": {
+      "main": [
+        [
+          {
+            "node": "Save Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "updatedAt": "2024-01-01T00:00:00.000Z",
+      "id": "pdf-converter",
+      "name": "PDF Converter"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "versionId": "1"
+}
